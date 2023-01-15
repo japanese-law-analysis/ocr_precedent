@@ -11,6 +11,9 @@ repository = "https://github.com/japanese-law-analysis/ocr_precedent"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[badges]
+github = { repository = "japanese-law-analysis/ocr_precedent", workflow = "Rust CI" }
+
 [dependencies]
 anyhow = "1.0.68"
 clap = { version = "4.1.1", features = ["derive"] }

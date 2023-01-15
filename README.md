@@ -1,3 +1,5 @@
+[![Workflow Status](https://github.com/japanese-law-analysis/ocr_precedent/workflows/Rust%20CI/badge.svg)](https://github.com/japanese-law-analysis/ocr_precedent/actions?query=workflow%3A%22Rust%2BCI%22)
+
 # ocr_precedent
 
 判例のPDFをOCRでテキストに変換するプログラム
