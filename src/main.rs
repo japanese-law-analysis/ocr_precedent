@@ -141,15 +141,19 @@ async fn join_ocr_file(file_path_lst: &[String], output_path: &str) -> Result<()
   Ok(())
 }
 
-async fn download_and_ocr(name: &str, url: &str, tmp_name: &str) -> Result<()> {
+async fn download_and_ocr(name: &str, url: &str, tmp_name: &str, is_downloads: bool) -> Result<()> {
   let file_name = format!("{tmp_name}/{name}");
   let file_path_pdf = format!("{file_name}.pdf");
   let file_path_txt = format!("{name}.txt");
   let file_path_err = format!("{file_name}_err.txt");
   let mut err_output = File::create(file_path_err).await?;
-  println!("[START] downloads: {url}");
-  download_pdf(&file_path_pdf, url).await?;
-  println!("[END] downloads: {url}");
+  if is_downloads {
+    println!("[START] downloads: {url}");
+    download_pdf(&file_path_pdf, url).await?;
+    println!("[END] downloads: {url}");
+  } else {
+    println!("[Hit PDF Cache] {file_path_pdf}");
+  };
   let pdf_size = get_pdf_page_size(&file_path_pdf).await?;
   let err_msg_opt = convert_pdf(&file_name).await;
   if let Some(err_msg) = err_msg_opt {
@@ -187,6 +191,9 @@ struct Args {
   /// PDFのキャッシュを作成しない場合に付けるフラグ
   #[arg(long, default_value_t = false)]
   do_not_use_cache: bool,
+  /// 生成後のテキストファイルがあったとしても再度OCRしなおすかのフラグ
+  #[arg(long, default_value_t = false)]
+  force_re_ocr: bool,
 }
 
 #[tokio::main]
@@ -220,13 +227,22 @@ async fn main() -> Result<()> {
       .and_then(|v| v.as_u64())
       .ok_or_else(|| anyhow!("date/dayフィールドが無い"))?;
     let name = format!("{case_number}_{year}_{month}_{day}");
-    let cache_file_path = format!("{name}.txt");
-    let path = Path::new(&cache_file_path);
-    let is_run = if !args.do_not_use_cache {
-      // キャッシュを使うので、ファイルが無かったら動かす
-      !path.exists()
+    let cache_file_path = format!("{tmp_name}/{name}.pdf");
+    let cache_path = Path::new(&cache_file_path);
+    let txt_file_path = format!("{name}.txt");
+    let txt_path = Path::new(&txt_file_path);
+    let is_downloads = if !args.do_not_use_cache {
+      // キャッシュを使うので、ファイルが無かったらダウンロードする
+      !cache_path.exists()
     } else {
-      // キャッシュを使わないので常に実行
+      // キャッシュを使わないので常にダウンロード
+      true
+    };
+    let is_run = if !args.force_re_ocr {
+      // 生成テキストファイルがなければ実行する
+      !txt_path.exists()
+    } else {
+      // 常に実行
       true
     };
     if is_run {
@@ -235,10 +251,10 @@ async fn main() -> Result<()> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow!("full_pdf_linkフィールドが無い"))?;
       println!("[START] write: {name}");
-      download_and_ocr(&name, url, tmp_name).await?;
+      download_and_ocr(&name, url, tmp_name, is_downloads).await?;
       println!("[END] write: {name}");
     } else {
-      println!("[Hit Cache] {name}({cache_file_path})");
+      println!("[Hit Text Cache] {name}({cache_file_path})");
     }
   }
   Ok(())
