@@ -141,15 +141,15 @@ async fn join_ocr_file(file_path_lst: &[String], output_path: &str) -> Result<()
   Ok(())
 }
 
-async fn download_and_ocr(name: &str, url: &str, tmp_name: &str, is_downloads: bool) -> Result<()> {
+async fn download_and_ocr(name: &str, url: &str, tmp_name: &str) -> Result<()> {
   let file_name = format!("{tmp_name}/{name}");
   let file_path_pdf = format!("{file_name}.pdf");
   let file_path_txt = format!("{name}.txt");
-  if is_downloads {
-    println!("[START] downloads: {url}");
-    download_pdf(&file_path_pdf, url).await?;
-    println!("[END] downloads: {url}");
-  }
+  let file_path_err = format!("{file_name}_err.txt");
+  let mut err_output = File::create(file_path_err).await?;
+  println!("[START] downloads: {url}");
+  download_pdf(&file_path_pdf, url).await?;
+  println!("[END] downloads: {url}");
   let pdf_size = get_pdf_page_size(&file_path_pdf).await?;
   let err_msg_opt = convert_pdf(&file_name).await;
   if let Some(err_msg) = err_msg_opt {
@@ -160,17 +160,18 @@ async fn download_and_ocr(name: &str, url: &str, tmp_name: &str, is_downloads: b
     let file_path = format!("{file_name}-{page_num}.jpg");
     let err_msg_opt = crop_img(&file_path).await;
     if let Some(err_msg) = err_msg_opt {
-      println!("crop err({name}): {err_msg}");
+      err_output.write_all(err_msg.as_bytes()).await?;
     }
     let err_msg_opt = ocr_img(&format!("{file_name}-{page_num}")).await;
     if let Some(err_msg) = err_msg_opt {
-      println!("ocr err({name}): {err_msg}");
+      err_output.write_all(err_msg.as_bytes()).await?;
     }
   }
   let txt_path_lst = (1..=pdf_size)
     .map(|i| format!("{file_name}-{i}.txt"))
     .collect::<Vec<_>>();
   join_ocr_file(&txt_path_lst, &file_path_txt).await?;
+  err_output.flush().await?;
   Ok(())
 }
 
@@ -219,23 +220,26 @@ async fn main() -> Result<()> {
       .and_then(|v| v.as_u64())
       .ok_or_else(|| anyhow!("date/dayフィールドが無い"))?;
     let name = format!("{case_number}_{year}_{month}_{day}");
-    let tmp_pdf_file_path = format!("{tmp_name}/{name}.pdf");
-    let path = Path::new(&tmp_pdf_file_path);
-    let is_downloads = if !args.do_not_use_cache {
+    let cache_file_path = format!("{name}.txt");
+    let path = Path::new(&cache_file_path);
+    let is_run = if !args.do_not_use_cache {
       // キャッシュを使うので、ファイルが無かったら動かす
       !path.exists()
     } else {
       // キャッシュを使わないので常に実行
       true
     };
-    let url = v
-      .get("full_pdf_link")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| anyhow!("full_pdf_linkフィールドが無い"))?;
-    println!("[START] write: {name}");
-    println!("[START] url: {url}");
-    download_and_ocr(&name, url, tmp_name, is_downloads).await?;
-    println!("[END] write: {name}");
+    if is_run {
+      let url = v
+        .get("full_pdf_link")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| anyhow!("full_pdf_linkフィールドが無い"))?;
+      println!("[START] write: {name}");
+      download_and_ocr(&name, url, tmp_name).await?;
+      println!("[END] write: {name}");
+    } else {
+      println!("[Hit Cache] {name}({cache_file_path})");
+    }
   }
   Ok(())
 }
