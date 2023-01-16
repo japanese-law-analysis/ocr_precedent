@@ -22,6 +22,8 @@ cargo install --git "https://github.com/japanese-law-analysis/ocr_precedent.git"
 
 ## How to use
 
+### 基本的な使い方
+
 ```sh
 ocr_precedent --input "input.json"
 ```
@@ -33,6 +35,12 @@ ocr_precedent --input "input.json"
 そして`ocr_precedent`を起動したディレクトリに各判例テキストファイルが生成されます。
 
 ファイル名は`{事件番号}_{year}_{month}_{day}.txt`形式です。年月日は判決日です。
+
+### オプション
+
+- `--tmp`：一時フォルダのフォルダ名を変更することができる
+- `--do-not-use-cache`：PDFファイルがtmpフォルダにすでに存在している場合でも再度ダウンロードを実行ようにする
+- `--force-re-ocr`：すでに生成済みテキストファイルが存在している場合でも再度OCR処理を実行する
 
 ---
 [MIT License](https://github.com/japanese-law-analysis/ocr_precedent/blob/master/LICENSE)
