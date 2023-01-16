@@ -40,7 +40,7 @@
 //!
 //! ---
 //! [MIT License](https://github.com/japanese-law-analysis/ocr_precedent/blob/master/LICENSE)
-//! (c) 2021 Naoki Kaneko (a.k.a. "puripuri2100")
+//! (c) 2023 Naoki Kaneko (a.k.a. "puripuri2100")
 //!
 
 use anyhow::{anyhow, Result};
