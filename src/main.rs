@@ -213,7 +213,7 @@ async fn download_and_pdftotext(
   if let Ok(generate_txt) = fs::read_to_string(&file_path_generate_txt).await {
     let mut line_stream = tokio_stream::iter(generate_txt.lines());
     while let Some(line) = line_stream.next().await {
-      let is_page_or_line_num_re = Regex::new(r"^-?\s*\d+\s*-?$").unwrap();
+      let is_page_or_line_num_re = Regex::new(r"^(\s*-?\s*\d+\s*-?\s*)|(\s+)$").unwrap();
       if !is_page_or_line_num_re.is_match(line) {
         txt_output.write_all(line.as_bytes()).await?;
         txt_output.write_all(b"\n").await?;
