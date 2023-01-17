@@ -1,2 +1,4 @@
 /target
 tmp/*
+test.json
+test_txt/*
