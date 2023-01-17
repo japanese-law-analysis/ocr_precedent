@@ -335,7 +335,11 @@ async fn main() -> Result<()> {
       .get("day")
       .and_then(|v| v.as_u64())
       .ok_or_else(|| anyhow!("date/dayフィールドが無い"))?;
-    let name = format!("{case_number}_{year}_{month}_{day}");
+    let lawsuit_id = v
+      .get("lawsuit_id")
+      .and_then(|v| v.as_str())
+      .ok_or_else(|| anyhow!("lawsuit_idフィールドが無い"))?;
+    let name = format!("{case_number}_{year}_{month}_{day}_{lawsuit_id}");
     let cache_file_path = format!("{tmp_name}/{name}.pdf");
     let cache_path = Path::new(&cache_file_path);
     let txt_file_path = format!("{name}.txt");
