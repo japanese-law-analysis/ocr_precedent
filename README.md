@@ -39,8 +39,12 @@ pdf2txt_precedent --input "input.json"
 ### オプション
 
 - `--tmp`：一時フォルダのフォルダ名を変更することができる
+- `--output`：生成ファイルを出力するフォルダを変更することができる
+- `--mode`：テキスト抽出に用いる技術を選ぶことができる
+  - `p2t`：`pdftotext`コマンドを使用した抽出を行う
+  - `ocr`：OCRを用いた抽出を行う
 - `--do-not-use-cache`：PDFファイルがtmpフォルダにすでに存在している場合でも再度ダウンロードを実行ようにする
-- `--force-re-ocr`：すでに生成済みテキストファイルが存在している場合でも再度OCR処理を実行する
+- `--force-re-run`：すでに生成済みテキストファイルが存在している場合でも再度処理を実行する
 
 ---
 [MIT License](https://github.com/japanese-law-analysis/pdf2txt_precedent/blob/master/LICENSE)
