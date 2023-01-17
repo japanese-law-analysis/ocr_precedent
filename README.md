@@ -2,8 +2,6 @@
 
 # pdf2txt_precedent
 
-判例のPDFをOCRでテキストに変換するプログラム
-
 [listup_precedent](https://github.com/japanese-law-analysis/listup_precedent)で作成した裁判例の一覧をもとに、[裁判所のHP](https://www.courts.go.jp)から判決文PDFファイルをダウンロードしてテキストに直すソフトウェアです。
 
 ## Install

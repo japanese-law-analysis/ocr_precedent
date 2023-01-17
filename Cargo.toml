@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Naoki Kaneko <puripuri2100@gmail.com>"]
 rust = "1.64.0"
 license = "MIT"
-description = "判例のPDFをOCRでテキストに変換するプログラム"
+description = "判例のPDFをテキストに変換するプログラム"
 readme = "README.md"
 repository = "https://github.com/japanese-law-analysis/pdf2txt_precedent"
 
