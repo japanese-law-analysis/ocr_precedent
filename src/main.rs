@@ -13,7 +13,7 @@
 //! ```sh
 //! sudo apt update
 //! sudo apt install tesseract-ocr libtesseract-dev tesseract-ocr-jpn imagemagick poppler-utils
-//! cargo install --git "https://github.com/japanese-law-analysis/ocr_precedent.git"
+//! cargo install --git "https://github.com/japanese-law-analysis/pdf2txt_precedent.git"
 //! ```
 //!
 //! # How to use
@@ -21,14 +21,14 @@
 //! ## 基本的な使い方
 //!
 //! ```sh
-//! ocr_precedent --input "input.json"
+//! pdf2txt_precedent --input "input.json"
 //! ```
 //!
 //! で起動します。与えるJSONファイルは[listup_precedent](https://github.com/japanese-law-analysis/listup_precedent)で生成されるものです。
 //!
 //! 起動するとその場にtmpフォルダが作られ、そこに各PDFファイルなどがダウンロード・生成されます。
 //!
-//! そして`ocr_precedent`を起動したディレクトリに各判例テキストファイルが生成されます。
+//! そして`pdf2txt_precedent`を起動したディレクトリに各判例テキストファイルが生成されます。
 //!
 //! ファイル名は`{事件番号}_{year}_{month}_{day}.txt`形式です。年月日は判決日です。
 //!
@@ -39,7 +39,7 @@
 //! - `--force-re-ocr`：すでに生成済みテキストファイルが存在している場合でも再度OCR処理を実行する
 //!
 //! ---
-//! [MIT License](https://github.com/japanese-law-analysis/ocr_precedent/blob/master/LICENSE)
+//! [MIT License](https://github.com/japanese-law-analysis/pdf2txt_precedent/blob/master/LICENSE)
 //! (c) 2023 Naoki Kaneko (a.k.a. "puripuri2100")
 //!
 
@@ -121,7 +121,7 @@ async fn crop_img(file_path: &str) -> Option<String> {
   })
 }
 
-async fn ocr_img(name: &str) -> Option<String> {
+async fn pdf2txt_img(name: &str) -> Option<String> {
   let output = Command::new("tesseract")
     .arg(format!("{name}.jpg"))
     .arg(name)
@@ -140,7 +140,7 @@ async fn ocr_img(name: &str) -> Option<String> {
   })
 }
 
-async fn join_ocr_text(text: &str) -> String {
+async fn join_pdf2txt_text(text: &str) -> String {
   let mut s = String::new();
   let mut line_stream = tokio_stream::iter(text.lines());
   let mut is_null_line = false;
@@ -159,14 +159,14 @@ async fn join_ocr_text(text: &str) -> String {
   s
 }
 
-async fn join_ocr_file(file_path_lst: &[String], output_path: &str) -> Result<()> {
+async fn join_pdf2txt_file(file_path_lst: &[String], output_path: &str) -> Result<()> {
   let mut s = String::new();
   let mut stream = tokio_stream::iter(file_path_lst);
   while let Some(file_path) = stream.next().await {
     let file_contents = fs::read_to_string(file_path).await?;
     s.push_str(file_contents.trim());
   }
-  let s = join_ocr_text(&s).await;
+  let s = join_pdf2txt_text(&s).await;
   let mut output = File::create(output_path).await?;
   output.write_all(s.as_bytes()).await?;
   output.flush().await?;
@@ -198,7 +198,7 @@ async fn download_and_ocr(name: &str, url: &str, tmp_name: &str, is_downloads: b
     if let Some(err_msg) = err_msg_opt {
       err_output.write_all(err_msg.as_bytes()).await?;
     }
-    let err_msg_opt = ocr_img(&format!("{file_name}-{page_num}")).await;
+    let err_msg_opt = pdf2txt_img(&format!("{file_name}-{page_num}")).await;
     if let Some(err_msg) = err_msg_opt {
       err_output.write_all(err_msg.as_bytes()).await?;
     }
@@ -206,7 +206,7 @@ async fn download_and_ocr(name: &str, url: &str, tmp_name: &str, is_downloads: b
   let txt_path_lst = (1..=pdf_size)
     .map(|i| format!("{file_name}-{i}.txt"))
     .collect::<Vec<_>>();
-  join_ocr_file(&txt_path_lst, &file_path_txt).await?;
+  join_pdf2txt_file(&txt_path_lst, &file_path_txt).await?;
   err_output.flush().await?;
   Ok(())
 }

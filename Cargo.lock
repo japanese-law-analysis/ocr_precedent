@@ -493,19 +493,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ocr_precedent"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "regex",
- "reqwest",
- "serde_json",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -583,6 +570,19 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-sys",
+]
+
+[[package]]
+name = "pdf2txt_precedent"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "regex",
+ "reqwest",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]
