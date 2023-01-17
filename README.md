@@ -32,7 +32,7 @@ pdf2txt_precedent --input "input.json"
 
 そして`pdf2txt_precedent`を起動したディレクトリに各判例テキストファイルが生成されます。
 
-ファイル名は`{事件番号}_{year}_{month}_{day}.txt`形式です。年月日は判決日です。
+ファイル名は`{事件番号}_{year}_{month}_{day}_{裁判の種類}.txt`形式です。年月日は判決日です。
 
 ### オプション
 

@@ -28,7 +28,7 @@
 //!
 //! そして`pdf2txt_precedent`を起動したディレクトリに各判例テキストファイルが生成されます。
 //!
-//! ファイル名は`{事件番号}_{year}_{month}_{day}.txt`形式です。年月日は判決日です。
+//! ファイル名は`{事件番号}_{year}_{month}_{day}_{裁判の種類}.txt`形式です。年月日は判決日です。
 //!
 //! ## オプション
 //!
@@ -335,11 +335,11 @@ async fn main() -> Result<()> {
       .get("day")
       .and_then(|v| v.as_u64())
       .ok_or_else(|| anyhow!("date/dayフィールドが無い"))?;
-    let lawsuit_id = v
-      .get("lawsuit_id")
+    let trial_type = v
+      .get("trial_type")
       .and_then(|v| v.as_str())
-      .ok_or_else(|| anyhow!("lawsuit_idフィールドが無い"))?;
-    let name = format!("{case_number}_{year}_{month}_{day}_{lawsuit_id}");
+      .ok_or_else(|| anyhow!("trial_typeフィールドが無い"))?;
+    let name = format!("{case_number}_{year}_{month}_{day}_{trial_type}");
     let cache_file_path = format!("{tmp_name}/{name}.pdf");
     let cache_path = Path::new(&cache_file_path);
     let txt_file_path = format!("{name}.txt");
