@@ -48,7 +48,7 @@
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueEnum};
 use regex::Regex;
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::path::Path;
 use tokio::{
   self,
@@ -188,7 +188,7 @@ async fn download_and_pdftotext(
   let file_path_txt = format!("{output_name}/{name}.txt");
   let file_path_err = format!("{file_name}_err.txt");
   let mut txt_output = File::create(file_path_txt).await?;
-  let mut err_output = File::create(file_path_err).await?;
+  let mut err_txt = String::new();
   if is_downloads {
     println!("[START] downloads: {url}");
     download_pdf(&file_path_pdf, url).await?;
@@ -205,7 +205,8 @@ async fn download_and_pdftotext(
   if let Some(output) = output {
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     if !stderr.is_empty() {
-      err_output.write_all(stderr.as_bytes()).await?;
+      err_txt.push_str(&stderr);
+      err_txt.push('\n');
     };
   }
   if let Ok(generate_txt) = fs::read_to_string(&file_path_generate_txt).await {
@@ -218,12 +219,17 @@ async fn download_and_pdftotext(
       }
     }
   } else {
-    err_output
-      .write_all(format!("'{}': No such file or directory", &file_path_generate_txt).as_bytes())
-      .await?;
+    err_txt.push_str(&format!(
+      "'{}': No such file or directory\n",
+      &file_path_generate_txt
+    ));
   }
   txt_output.flush().await?;
-  err_output.flush().await?;
+  if !err_txt.is_empty() {
+    let mut err_output = File::create(file_path_err).await?;
+    err_output.write_all(err_txt.as_bytes()).await?;
+    err_output.flush().await?;
+  }
   Ok(())
 }
 
@@ -312,34 +318,14 @@ async fn main() -> Result<()> {
   fs::create_dir_all(output_name).await?;
   let input_file_path = &args.input;
   let input_json = fs::read_to_string(input_file_path).await?;
-  let input_json_lst: Vec<Value> = serde_json::from_str(&input_json)?;
+  let input_json_lst: Map<String, Value> = serde_json::from_str(&input_json)?;
   let mut json_stream = tokio_stream::iter(input_json_lst);
-  while let Some(v) = json_stream.next().await {
+  while let Some((name, v)) = json_stream.next().await {
     let case_number = v
       .get("case_number")
       .and_then(|v| v.as_str())
       .ok_or_else(|| anyhow!("case_numberフィールドが無い"))?;
     println!("case_number: {case_number}");
-    let date = v
-      .get("date")
-      .ok_or_else(|| anyhow!("dateフィールドが無い"))?;
-    let year = date
-      .get("year")
-      .and_then(|v| v.as_u64())
-      .ok_or_else(|| anyhow!("date/yearフィールドが無い"))?;
-    let month = date
-      .get("month")
-      .and_then(|v| v.as_u64())
-      .ok_or_else(|| anyhow!("date/monthフィールドが無い"))?;
-    let day = date
-      .get("day")
-      .and_then(|v| v.as_u64())
-      .ok_or_else(|| anyhow!("date/dayフィールドが無い"))?;
-    let trial_type = v
-      .get("trial_type")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| anyhow!("trial_typeフィールドが無い"))?;
-    let name = format!("{case_number}_{year}_{month}_{day}_{trial_type}");
     let cache_file_path = format!("{tmp_name}/{name}.pdf");
     let cache_path = Path::new(&cache_file_path);
     let txt_file_path = format!("{name}.txt");
